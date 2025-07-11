@@ -17,7 +17,8 @@ const connectToDatabase = async () => {
       password: process.env.MYSQL_PASSWORD,
       database: process.env.MYSQL_DATABASE,
     });
-    await pool.getConnection();
+    const connection = await pool.getConnection();
+    connection.release();
     console.log('Connected to MySQL database successfully');
     await pool.execute(CREATE_TABLE_USERS);
     console.log('Users table created successfully or already exists');
