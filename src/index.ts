@@ -8,7 +8,7 @@ config(); // Load environment variables from .env file
 const init = async () => {
   try {
     await connectToDatabase();
-    await connectToRedis();
+    // await connectToRedis();
     const port = process.env.PORT || 5000;
     app.listen(port, () => {
       console.log(`Server is Listening on port ${port}`);
