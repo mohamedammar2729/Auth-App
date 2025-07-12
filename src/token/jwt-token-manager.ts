@@ -14,7 +14,10 @@ export const generateJWTToken = (
   return token;
 };
 
-export const saveRefreshTokenToRedis = async (refreshToken: string) => {
+export const saveRefreshTokenToRedis = async (
+  refreshToken: string,
+  encryptedToken: string
+) => {
   try {
     const decodedData = jwt.decode(refreshToken, { json: true });
     if (!decodedData) {
@@ -23,9 +26,8 @@ export const saveRefreshTokenToRedis = async (refreshToken: string) => {
 
     const key = generateRedisKey(decodedData.id);
     const ttl = generateTTL(decodedData.exp!);
-    await setCache(key, encryptData(refreshToken), ttl); // Set cache with 7 days expiration
+    await setCache(key, encryptedToken, ttl); // Set cache with 7 days expiration
     console.log(`Refresh token saved to Redis for user ID: ${decodedData.id}`);
-
   } catch (error) {
     console.error('Error saving refresh token to Redis:', error);
     throw error; // Re-throw the error to be handled by the caller
