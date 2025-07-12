@@ -26,15 +26,56 @@ const getUserBy = async (by: 'email' | 'id', value: string) => {
   }
 };
 
+const setCookies = (
+  res: Response,
+  accessToken: string,
+  refreshToken: string
+) => {
+  res.clearCookie('accessToken', {
+    domain: 'localhost',
+    httpOnly: true,
+    path: '/',
+  }); // Clear existing access token cookie
+  res.clearCookie('refreshToken', {
+    domain: 'localhost',
+    httpOnly: true,
+    path: '/',
+  }); // Clear existing refresh token cookie
+  const expiryAccessToken = new Date(new Date().getTime() + 60 * 60 * 1000); // 1 hour
+  const expiryRefreshToken = new Date(
+    new Date().getTime() + 7 * 24 * 60 * 60 * 1000
+  ); // 7 days
+  res.cookie('access-token', accessToken, {
+    domain: 'localhost',
+    httpOnly: true,
+    path: '/',
+    expires: expiryAccessToken,
+    sameSite: 'lax',
+  }); // Set new access token cookie
+
+  res.cookie('refresh-token', refreshToken, {
+    domain: 'localhost',
+    httpOnly: true,
+    path: '/',
+    expires: expiryRefreshToken,
+    sameSite: 'lax',
+  }); // Set new refresh token cookie
+
+  console.log('Cookies set successfully');
+  return;
+};
+
 const setAuthToken = async (id: string, email: string, res: Response) => {
   try {
     const accessToken = generateJWTToken(id, email, 'access');
     const refreshToken = generateJWTToken(id, email, 'refresh');
     // we will now store these tokens un redis then send them to the client
     //Note: refresh token should be encrypted before storing
-    await saveRefreshTokenToRedis(refreshToken);
+    const encryptedToken = encryptData(refreshToken);
+    await saveRefreshTokenToRedis(refreshToken, encryptedToken);
+    setCookies(res, accessToken, encryptedToken); // Set cookies in the response
   } catch (error) {
-    console.error('Error setting auth token:', error);
+    console.error('Error setting auth tokens:', error);
     throw error; // Re-throw the error to be handled by the caller
   }
 };
@@ -83,11 +124,13 @@ export const registerUser = async (req: Request, res: Response) => {
       email,
       hashedPassword,
     ]);
-    console.log('Query result (user created):', result);
+    //@ts-ignore
+    const insertId = result[0].insertId as number;
+    await setAuthToken(String(insertId), email, res); // Set auth tokens and cookies
 
     return res.status(201).json({
       message: 'User created successfully',
-      user: result,
+      user: result[0],
     });
   } catch (error) {
     console.error('Error retrieving user:', error);
@@ -116,6 +159,7 @@ export const loginUser = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
     // Set Token or session here if needed
+    await setAuthToken(String(user.id), email, res); // Set auth tokens and cookies
     return res.status(200).json({
       message: 'Login successful',
       user,

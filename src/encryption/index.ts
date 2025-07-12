@@ -6,6 +6,8 @@
 // IV is generated inside the buffer, but Key is Base64 then converted to Buffer
 
 import crypto from 'crypto';
+import { config } from 'dotenv';
+config(); // Load environment variables from .env file
 
 const algorithm = 'aes-256-cbc'; // AES-256-CBC is a symmetric encryption algorithm
 const key = Buffer.from(process.env.ENCRYPTION_KEY!, 'base64');
