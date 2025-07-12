@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { setCache } from '../redis/actions';
 import { generateRedisKey, generateTTL } from '../utils/helpers';
-import { encryptData } from '../encryption';
 
 export const generateJWTToken = (
   id: string,
