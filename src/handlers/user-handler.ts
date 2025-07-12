@@ -3,6 +3,11 @@ import { GET_USER_BY_EMAIL, GET_USER_BY_ID } from '../mysql/queries';
 import { pool } from '../mysql/connection';
 import { INSERT_USER_STATEMENT } from '../mysql/mutations';
 import bcrypt from 'bcrypt';
+import {
+  generateJWTToken,
+  saveRefreshTokenToRedis,
+} from '../token/jwt-token-manager';
+import { encryptData } from '../encryption';
 
 const getUserBy = async (by: 'email' | 'id', value: string) => {
   try {
@@ -21,6 +26,19 @@ const getUserBy = async (by: 'email' | 'id', value: string) => {
   }
 };
 
+const setAuthToken = async (id: string, email: string, res: Response) => {
+  try {
+    const accessToken = generateJWTToken(id, email, 'access');
+    const refreshToken = generateJWTToken(id, email, 'refresh');
+    // we will now store these tokens un redis then send them to the client
+    //Note: refresh token should be encrypted before storing
+    await saveRefreshTokenToRedis(refreshToken);
+  } catch (error) {
+    console.error('Error setting auth token:', error);
+    throw error; // Re-throw the error to be handled by the caller
+  }
+};
+
 export const getUser = async (req: Request, res: Response) => {
   try {
     const userId = req.params.id;
@@ -29,7 +47,7 @@ export const getUser = async (req: Request, res: Response) => {
     }
     const user = await getUserBy('id', userId);
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      return res.status(404).json({ error: 'User not found' });
     }
 
     return res.status(200).json({

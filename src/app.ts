@@ -13,6 +13,5 @@ app.use(express.urlencoded({ extended: true })); // to parse URL-encoded data
 app.use(helmet()) // to secure Express apps by setting various HTTP headers
 app.use(morgan('dev')); // to log HTTP requests in the console
 
-app.use('/api/v1/auth', appRouter); // Use the appRouter for all routes under /api/v1
-
+app.use('/api', appRouter); // Use the appRouter for all routes under /api
 export default app;
