@@ -13,10 +13,12 @@ const init = async () => {
     app.listen(port, () => {
       console.log(`Server is Listening on port ${port}`);
     });
+    
   } catch (error) {
-    console.error('Failed to initialize the application:', error);
+    console.log('Failed to initialize the application:', error);
     process.exit(1); // Exit the process with a failure code
   }
 };
 
 init();
+
