@@ -10,33 +10,41 @@ import {
 import { encryptData } from '../encryption';
 
 const getUserBy = async (by: 'email' | 'id', value: string) => {
+  let connection;
   try {
-    const connection = await pool.getConnection();
+    connection = await pool.getConnection();
+    console.log(`Executing query for ${by}:`, value);
+
     const result = await connection.query(
       by === 'email' ? GET_USER_BY_EMAIL : GET_USER_BY_ID,
       [value]
     );
+
+    console.log('Query Result:', result);
+
     //@ts-ignore
-    const user = result[0][0];
-    console.log('user retrieved:', user);
+    const user = result[0]?.[0];
+    console.log('User retrieved:', user);
     return user;
   } catch (error) {
-    console.error('Error retrieving user by:', error);
-    throw error;
+    console.error('Error while retrieving user:', error);
+    return null;
+  } finally {
+    if (connection) connection.release();
   }
 };
 
-const setCookies = (
-  res: Response,
+export const setCookies = (
   accessToken: string,
-  refreshToken: string
+  refreshToken: string,
+  res: Response,
 ) => {
-  res.clearCookie('access-token', {
+  res.clearCookie('access_token', {
     domain: 'localhost',
     httpOnly: true,
     path: '/',
   }); // Clear existing access token cookie
-  res.clearCookie('refresh-token', {
+  res.clearCookie('refresh_token', {
     domain: 'localhost',
     httpOnly: true,
     path: '/',
@@ -45,7 +53,7 @@ const setCookies = (
   const expiryRefreshToken = new Date(
     new Date().getTime() + 7 * 24 * 60 * 60 * 1000
   ); // 7 days
-  res.cookie('access-token', accessToken, {
+  res.cookie('access_token', accessToken, {
     domain: 'localhost',
     httpOnly: true,
     path: '/',
@@ -53,7 +61,7 @@ const setCookies = (
     sameSite: 'lax',
   }); // Set new access token cookie
 
-  res.cookie('refresh-token', refreshToken, {
+  res.cookie('refresh_token', refreshToken, {
     domain: 'localhost',
     httpOnly: true,
     path: '/',
@@ -73,7 +81,7 @@ const setAuthToken = async (id: string, email: string, res: Response) => {
     //Note: refresh token should be encrypted before storing
     const encryptedToken = encryptData(refreshToken);
     await saveRefreshTokenToRedis(refreshToken, encryptedToken);
-    setCookies(res, accessToken, encryptedToken); // Set cookies in the response
+    setCookies(accessToken, encryptedToken,res); // Set cookies in the response
   } catch (error) {
     console.error('Error setting auth tokens:', error);
     throw error; // Re-throw the error to be handled by the caller
@@ -82,24 +90,44 @@ const setAuthToken = async (id: string, email: string, res: Response) => {
 
 export const getUser = async (req: Request, res: Response) => {
   try {
-    const userId = req.params.id;
-    if (!userId || isNaN(Number(userId))) {
-      return res.status(400).json({ error: 'User ID is required' });
-    }
-    const user = await getUserBy('id', userId);
+    const id = res.locals.jwtData.id;
+    console.log(res.locals.jwtData);
+
+    const user = await getUserBy('id', id);
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      console.log('User not found');
+      return res.status(401).json({ message: 'User not found' });
+    }
+    return res.status(200).json({ message: 'User retrieved', user });
+  } catch (error) {
+    console.log('Error occurred', error);
+    res
+      .status(500)
+      .json({ message: 'Unexpected error occurred, Try again later' });
+    throw error;
+  }
+};
+
+
+export const getUserById = async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    if (!id || isNaN(Number(id))) {
+      return res.status(400).json({ message: 'Invalid user id' });
     }
 
-    return res.status(200).json({
-      message: 'User retrieved successfully',
-      user,
-    });
+    const user = await getUserBy('id', id);
+    if (!user) {
+      console.log('User not found');
+      return res.status(401).json({ message: 'User not found' });
+    }
+    return res.status(200).json({ message: 'User retrieved', user });
   } catch (error) {
-    console.error('Error retrieving user:', error);
-    return res.status(500).json({
-      error: 'An error occurred while retrieving the user',
-    });
+    console.log('Error occurred', error);
+    res
+      .status(500)
+      .json({ message: 'Unexpected error occurred, Try again later' });
+    throw error;
   }
 };
 

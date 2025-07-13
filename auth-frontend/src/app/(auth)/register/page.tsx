@@ -4,7 +4,7 @@ import AuthForm from "../AuthForm";
 const RegisterPage = () => {
     return (
       <div>
-        <AuthForm isSignup={false} action={signupAction} />
+        <AuthForm isSignup action={signupAction} />
       </div>
     );
 }
