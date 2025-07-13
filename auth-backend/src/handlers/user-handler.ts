@@ -8,14 +8,15 @@ import {
   saveRefreshTokenToRedis,
 } from '../token/jwt-token-manager';
 import { encryptData } from '../encryption';
+import { Connection, PoolConnection } from 'mysql2/promise';
 
 const getUserBy = async (by: 'email' | 'id', value: string) => {
-  let connection;
+  let connect;
   try {
-    connection = await pool.getConnection();
+    connect = await pool.getConnection();
     console.log(`Executing query for ${by}:`, value);
 
-    const result = await connection.query(
+    const result = await connect.query(
       by === 'email' ? GET_USER_BY_EMAIL : GET_USER_BY_ID,
       [value]
     );
@@ -30,7 +31,7 @@ const getUserBy = async (by: 'email' | 'id', value: string) => {
     console.error('Error while retrieving user:', error);
     return null;
   } finally {
-    if (connection) connection.release();
+    if (connect) connect.release();
   }
 };
 
@@ -132,6 +133,7 @@ export const getUserById = async (req: Request, res: Response) => {
 };
 
 export const registerUser = async (req: Request, res: Response) => {
+  let connect: PoolConnection | null = null;
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
@@ -146,8 +148,8 @@ export const registerUser = async (req: Request, res: Response) => {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const connection = await pool.getConnection();
-    const result = await connection.query(INSERT_USER_STATEMENT, [
+    connect = await pool.getConnection();
+    const result = await connect.query(INSERT_USER_STATEMENT, [
       name,
       email,
       hashedPassword,
@@ -165,6 +167,8 @@ export const registerUser = async (req: Request, res: Response) => {
     return res.status(500).json({
       error: 'An error occurred while retrieving the user',
     });
+  }finally{
+    connect && connect.release();
   }
 };
 

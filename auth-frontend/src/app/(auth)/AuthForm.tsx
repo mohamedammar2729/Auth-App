@@ -7,12 +7,14 @@ const inputStyle =
 type props = {
   isSignup: boolean;
   action: (prevState: unknown, f: FormData) => Promise<unknown>;
+  
 };
-const AuthForm = ({ isSignup, action }: props) => {
+const AuthForm = ({ isSignup, action}: props) => {
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   //@ts-ignore
+
   const [state, formAction] = useActionState(action, undefined);
-  console.log(state);
+  console.log(state, 'Form Action State');
 
   return (
     <section className='w-full h-screen flex flex-col bg-gradient-to-r from-gray-900 to-black text-white  '>
@@ -29,7 +31,7 @@ const AuthForm = ({ isSignup, action }: props) => {
           transition={{ delay: 0.3 }}
           className='text-3xl font-semibold'
         >
-          {isSignup ? 'Register' : 'Login'} from here!
+          {isSignup ? 'Register' : 'Login'} from!
         </motion.h4>
         {isSignup && (
           <motion.div
