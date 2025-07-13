@@ -1,12 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server';
 
-import { LoginFormSchema, SignupFormSchema } from "../lib/definitions";
-
+import axios from 'axios';
+import { LoginFormSchema, SignupFormSchema } from '../lib/definitions';
 import setCookieParser from 'set-cookie-parser';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import axios from "axios";
 
 export const loginAction = async (prevState: unknown, formData: FormData) => {
   console.log(prevState);
@@ -20,6 +18,7 @@ export const loginAction = async (prevState: unknown, formData: FormData) => {
   if (!validateFields.success) {
     return { errors: validateFields.error.flatten().fieldErrors };
   }
+
   const email = formData.get('email');
   const password = formData.get('password');
 
@@ -29,8 +28,11 @@ export const loginAction = async (prevState: unknown, formData: FormData) => {
     console.log(res.headers['set-cookie']);
     const cookieStore = await cookies();
     const cookieData = setCookieParser(res.headers['set-cookie']!);
-    
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     cookieData.forEach((cookie: any) =>
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
       cookieStore.set(cookie.name, cookie.value, { ...cookie })
     );
     console.log(data);
@@ -65,6 +67,7 @@ export const signupAction = async (prevState: unknown, formData: FormData) => {
     const cookieStore = await cookies();
     const cookieData = setCookieParser(res.headers['set-cookie']!);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     cookieData.forEach((cookie: any) =>
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       //@ts-ignore

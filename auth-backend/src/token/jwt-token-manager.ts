@@ -32,3 +32,18 @@ export const saveRefreshTokenToRedis = async (
     throw error; // Re-throw the error to be handled by the caller
   }
 };
+
+export const verifyAndDecode = (token: string) => {
+  return new Promise((res, rej) => {
+    // jwt.verify is used to verify the token and decode it
+    jwt.verify(token, process.env.JWT_SECRET_KEY!, (err, payload) => {
+      if (err) {
+        console.log("Couldn't verify token");
+        rej(err);
+      } else {
+        console.log('Token verification successful');
+        res(payload);
+      }
+    });
+  });
+};
