@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  node-backend-server:
+    build:
+      context: ./auth-backend
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    env_file:
+      - ./auth-backend/.env
+    depends_on:
+      - mysql-db
+      - redis
+    networks:
+      - custom-network
+
+  nextjs-app:
+    build:
+      context: ./auth-frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./auth-frontend/.env
+    depends_on:
+      - node-backend-server
+    networks:
+      - custom-network
+
+  mysql-db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    env_file:
+      - ./.mysql.env
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - custom-network
+
+  redis:
+    image: redis/redis-stack:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - custom-network
+
+volumes:
+  mysql_data:
+  redis_data:
+
+networks:
+  custom-network:
+    driver: bridge

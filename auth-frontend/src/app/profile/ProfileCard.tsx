@@ -1,6 +1,8 @@
 "use client";
 import { motion } from "framer-motion";
-// import { MdVerifiedUser } from "react-icons/md";
+import { MdVerifiedUser } from "react-icons/md";
+
+
 
 type User = {
   id: string;
@@ -23,7 +25,7 @@ const ProfileCard = (props: User) => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          {/* <MdVerifiedUser size={50} /> */}
+          <MdVerifiedUser size={50} />
         </motion.div>
         <div className="mt-6 text-left">
           <div className="mb-3">
