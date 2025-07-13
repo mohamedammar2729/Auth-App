@@ -1,20 +1,26 @@
 'use client';
-
+import { useActionState } from 'react';
 
 const inputStyle = ' px-2 py-1  bg-gray-100 rounded-lg';
 type props = {
   isSignup: boolean;
-  action: (f: FormData) => Promise<void>;
+  action: (prevState: unknown, f: FormData) => Promise<unknown>;
 };
 
 const AuthForm = ({ isSignup, action }: props) => {
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  //@ts-ignore
+  const [state, formAction] = useActionState(action, undefined);
   return (
     <section className='w-full h-screen flex flex-col  '>
       <form
-        action={action}
+        action={formAction}
         className='flex flex-col m-auto justify-center items-center border-4 rounded-lg p-4 gap-3 '
       >
-        <h4 className='text-3xl py-3'>{isSignup ? 'Register' : 'Login'}</h4>
+        {JSON.stringify(state)}
+        <h4 className='text-3xl py-3'>
+          {isSignup ? 'Register' : 'Login'} from here!
+        </h4>
         {isSignup && (
           <>
             <label className='text-sm font-light my-4' htmlFor='name'>
